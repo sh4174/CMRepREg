@@ -1,0 +1,2 @@
+/usr/bin/ar cq libtoms611.a  CMakeFiles/toms611.dir/toms611.c.o
+/usr/bin/ranlib libtoms611.a

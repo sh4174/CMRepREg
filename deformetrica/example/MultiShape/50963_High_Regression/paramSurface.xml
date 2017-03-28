@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<deformable-object-parameters>
+<deformable-object-type>CMRep</deformable-object-type>
+<data-sigma>0.1</data-sigma>
+<use-fista>On</use-fista>
+<kernel-width>5</kernel-width>
+<kernel-type>exact</kernel-type>
+</deformable-object-parameters>

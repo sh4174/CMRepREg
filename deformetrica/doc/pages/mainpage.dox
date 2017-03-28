@@ -1,0 +1,17 @@
+/**
+\file mainpage.dox
+\brief Main page of Deformetrica.
+*/
+
+/**
+\mainpage Documentation of Deformetrica 2.1
+
+<ul>
+    <li><a href="hierarchy.html"><b>Class Hierarchy</b></a></li>
+    <li><a href="classes.html"><b>Class Index</b></a></li>
+    <li><a href="annotated.html"><b>Class List</b></a></li>
+    <li><a href="files.html"><b>File List</b></a></li>
+</ul>
+
+
+*/

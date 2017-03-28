@@ -1,0 +1,5 @@
+/home/shong/Deformetrica/PHD_ShapeGrant/deformetrica/utils/bin/CMakeFiles/surftransform.dir
+/home/shong/Deformetrica/PHD_ShapeGrant/deformetrica/utils/bin/CMakeFiles/MapsEllipsoidWithSource.dir
+/home/shong/Deformetrica/PHD_ShapeGrant/deformetrica/utils/bin/CMakeFiles/surfvolume.dir
+/home/shong/Deformetrica/PHD_ShapeGrant/deformetrica/utils/bin/CMakeFiles/extractlabel.dir
+/home/shong/Deformetrica/PHD_ShapeGrant/deformetrica/utils/bin/CMakeFiles/surfdecimate.dir

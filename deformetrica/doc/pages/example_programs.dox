@@ -1,0 +1,84 @@
+/**
+\file example_programs.dox
+\brief Example programs.
+*/
+
+/**
+\page example_programs Example programs
+
+\tableofcontents
+
+
+<!------------------------------------------------------>
+\section section1 Surface matching
+<!------------------------------------------------------>
+
+This example is located in \smallcode{/deformetrica/examples/surface_matching}. The source (resp. target) named \smallcode{sourceSurfaceMesh.vtk} (resp. \smallcode{targetSurfaceMesh.vtk}) for the matching problem can be visualized thanks to the <a href="http://www.paraview.org/"><b>ParaView</b></a> program (sources or binaries are available on the website).
+
+The parameters of the diffeomorphism and of the deformable object (in our case an oriented surface) are described in two \smallcode{*.xml} files. The syntax to carry out a surface matching is the following one :
+\includecode{
+../../codes/bin/sparseMatching3 paramDiffeos.xml paramSurface.xml sourceSurfaceMesh.vtk targetSurfaceMesh.vtk
+}
+
+This command can be found in the script named \smallcode{launch_simulation.sh}. After starting the program, some \smallcode{*.vtk} files has been generated at the different time points described in \smallcode{paramDiffeos.xml} along with some log files concerning the positions of the control points or momentas for instance.
+
+Let's now have a look to the different generated meshes. With ParaView, open \smallcode{sourceSurfaceMesh.vtk}, \smallcode{targetSurfaceMesh.vtk} and the \smallcode{sourceSurfaceMesh__t_*.vtk} files :
+
+\image html example1_open.png
+
+Then go on Properties and click Apply. Please verify that the 3D view in activated on the Layout part :
+
+\image html example1_layout.png
+
+Now, click on the Play button so as to visualize the matching :
+
+\htmlonly
+<figure>
+    <img src="images/example1_result_10.png" alt="Visualization at the 10th iteration" />
+    <img src="images/example1_result_19_final.png" alt="Visualization at the final iteration" />
+    <figcaption>Visualization at the 10th (left) and final (right) iteration.</figcaption>
+</figure>
+\endhtmlonly
+
+
+
+<!------------------------------------------------------>
+\section section2 Atlas construction
+<!------------------------------------------------------>
+
+This example is located in \smallcode{/deformetrica/examples/atlas_building}. We want to create an atlas of three (very simplified) banana shapes (\smallcode{banana_1-3.vtk}).
+
+We need to create an initial template at first. To do that, we will use the mesh \smallcode{sphere80.vtk} (in \smallcode{deformetrica/tools/meshes}) together with the program called \smallcode{MapsEllipsoidWithSource} (in \smallcode{deformetrica/tools/programs}) for the initialization of the template. 
+This program will deform the sphere to an ellipsoid, centered and scaled using the set of targets. The compilation is similar to Deformetrica : go on \smallcode{deformetrica/tools/bin} with the terminal then run the following commands :
+\includecode{
+# Replace PATH_TO_ITK and PATH_TO_VTK by the adequate values :
+cmake -D CMAKE_BUILD_TYPE=Release -D ITK_DIR=PATH_TO_ITK -D VTK_DIR=PATH_TO_VTK ../programs
+make	
+}
+
+Once done, go on \smallcode{/deformetrica/examples/atlas_building} with a terminal and use the following command :
+\includecode{
+../../tools/bin/MapsEllipsoidWithSource template.vtk ../../tools/meshes/sphere80.vtk banana_1.vtk banana_2.vtk banana_3.vtk
+}
+
+Our initial template \smallcode{template.vtk} has been created and we can now launch the simulation thanks to the next command line :
+\includecode{
+../../codes/bin/sparseAtlas3 paramDiffeos.xml 1 paramSurface.xml template.vtk banana_1.vtk banana_2.vtk banana_3.vtk
+}
+where \smallcode{1} denotes the number of objects per subject. All the commands can be found in the script named \smallcode{launch_simulation.sh}. To enhance the speed of the program, you can change the parameter \smallcode{number-of-threads} in \smallcode{paramDiffeos.xml} since the program is distributed on the subjects. Therefore, according to the number of cores of your processor (\smallcode{cat /proc/cpuinfo | grep processor | wc -l} under Linux), we can use up to 3 threads in this example (assuming that you are not limited with the number of cores of your computer).
+
+After the simulation, we will find the same log files as in the matching program, our final atlas (\smallcode{template_template.vtk}), the deformation of the latter to the targets at different time steps (\smallcode{template_to_subject_*__t_*.vtk}) and the evolution of the template during the optimization method (\smallcode{Template_0_iter*.vtk}).
+
+We propose now to visualize the momenta of each subject \smallcode{MOM_final.txt} associated to the control points \smallcode{CP_final.txt} thanks to the \smallcode{MultipleMomentaWriter.m} script located in \smallcode{deformetrica/tools/matlab_scripts/}. With matlab, add the \smallcode{matlab_scripts/} folder to search path thanks to the \smallcode{addpath} command and use the following command :
+\includecode{
+MultipleMomentaWriter('CP_final.txt', 'MOM_final.txt', 'CP_and_MOM.vtk')
+}
+
+With ParaView, open the \smallcode{CP_and_MOM.vtk} mesh then use a Glyph filter on the latter (\smallcode{Filters > Alphabetical > Glyph})
+
+In the Properties on the Glyph, set the Scale Factor so as to visualize the momenta (3 or 4 is a good value in our case) with our shapes :
+
+\image html example2_results.png "Visualization of the atlas (yellow), the third shape (red) and momenta of the different subjects"
+
+
+*/

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<deformable-object-parameters>
+<deformable-object-type>PointClouds</deformable-object-type>
+<data-sigma>1.0</data-sigma>
+<use-fista>On</use-fista>
+<reorient-normals>On</reorient-normals>
+<kernel-width>2</kernel-width>
+<kernel-type>exact</kernel-type>
+</deformable-object-parameters>

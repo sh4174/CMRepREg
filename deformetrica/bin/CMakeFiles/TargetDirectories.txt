@@ -1,0 +1,3 @@
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/cmrep/extras/toms611/CMakeFiles/toms611.dir
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin/CMakeFiles/sparseGeodesicRegression3CMRep.dir
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin/CMakeFiles/Deformetrica.dir

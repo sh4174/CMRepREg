@@ -1,0 +1,107 @@
+/**
+  \file installation_deformetrica.dox
+  \brief Installation of Deformetrica.
+*/
+
+/**
+\page installation_deformetrica Installation of Deformetrica
+
+\tableofcontents
+
+
+
+<!------------------------------------------------------>
+\section dependencies Dependencies
+<!------------------------------------------------------>
+This project is depending on :
+<ul>
+    <li>the <a href="http://www.itk.org/" title="ITK"><b>Insight Segmentation and Registration Toolkit (ITK)</b></a> library ;</li>
+    <li>the <a href="http://www.vtk.org/" title="VTK"><b>Visualization Toolkit (VTK)</b></a> library ;</li>
+    <li>the software <a href="http://www.cmake.org/" title="CMake"><b>CMake</b></a> (at least version 2.6 for Deformetrica to generate makefiles and <a href="http://www.gnu.org/software/make/" title="Make"><b>Make</b></a> programs).</li>
+</ul>
+Moreover, Deformetrica needs the <a href="http://www.fftw.org/" title="FFTW"><b>FFTW</b></a> library to perform Fast Fourier Transforms and the latter is included in ITK but not activated on default.
+
+
+
+
+<!------------------------------------------------------>
+\section sec_dependencies_linux Compilation of the dependencies under Linux
+<!------------------------------------------------------>
+Since <b>ITK</b> requires version 2.8 of CMake whereas <b>VTK</b> requires version 2.6.3, make sure that CMake is installed  (\smallcode{which cmake}) and up-to-date (\smallcode{cmake --version}). If not, download the latest version of CMake on the <a href="http://www.cmake.org/"><b>page project</b></a> and follow the instructions on the \smallcode{Readme.txt} file. You can also copy the following command lines :
+\includecode{
+# Latest version of CMake :
+wget "http://www.cmake.org/files/v2.8/cmake-2.8.10.2.tar.gz"
+tar -zxvf cmake-2.8.10.2.tar.gz
+mkdir cmake
+cd cmake-2.8.10.2/
+./bootstrap --prefix=../cmake
+make
+make install
+}
+
+
+
+<!------------------------------>
+\subsection ssec_compilation_itk Compilation of ITK
+<!------------------------------>
+Download the source code on the <a href="http://sourceforge.net/projects/itk/"><b>SourceForge</b></a> page of <b>ITK</b>. After uncompressing the archive, create a folder which will contain the library (e.g. \smallcode{ITKb/}). With the terminal, go on the folder \smallcode{ITKb/} then run the commands \smallcode{cmake -D USE_FFTWD=ON -D USE_FFTWF=ON ../InsightToolkit-[version]/} (we activate the FFTW library) and \smallcode{make}. The ITK library has been compiled : we can now delete the folder \smallcode{InsightToolkit-[version]/}. To sum up :
+\includecode{
+# Latest version of ITK :
+wget "http://sourceforge.net/projects/itk/files/itk/4.3/InsightToolkit-4.3.1.tar.gz/download"
+tar -zxvf InsightToolkit-[version].tar.gz
+mkdir ITKb
+cd ITKb/
+cmake -D USE_FFTWD=ON -D USE_FFTWF=ON ../InsightToolkit-[version]/
+make
+rm -rf ../InsightToolkit-[version]/
+}
+The path to ITK will be denoted by the variable \smallcode{PATH_TO_ITK} and will be used for the section \ref sec_compilation_deformetrica .
+
+
+
+<!------------------------------>
+\subsection ssection_compilation_vtk Compilation of VTK
+<!------------------------------>
+The procedure is the same as the compilation of ITK except that we don't need to active any option. Download the source code on the <a href="http://www.vtk.org/VTK/resources/software.html#latest"><b>page project</b></a> of \VTK. After uncompressing the archive, create a folder which will contain the library (e.g. \smallcode{VTKb/}). With the terminal, go on the folder \smallcode{VTKb/} then run the commands \smallcode{cmake ../VTK[version]/} and \smallcode{make}. The VTK library has been compiled : we can now delete the folder \smallcode{VTK-[version]/}. To sum up :
+\includecode{
+# Latest version of VTK :
+wget "http://www.vtk.org/files/release/5.10/vtk-5.10.1.tar.gz"
+tar -zxvf vtk-[version].tar.gz
+mkdir VTKb
+cd VTKb/
+cmake ../VTK[version]/
+make
+rm -rf ../VTK[version]/
+}
+
+The path to VTK will be denoted by the variable \smallcode{PATH_TO_VTK} and will be used for the section \ref sec_compilation_deformetrica .
+
+
+
+
+
+<!------------------------------------------------------>
+\section ssec_dependencies_mac Compilation of the dependencies under Mac OS X
+<!------------------------------------------------------>
+The installation of the libraries under Mac OS X are the same as under Linux, so we refer to the sub-section \ref sec_dependencies_linux to have <b>ITK</b> and <b>VTK</b>.
+
+
+
+
+
+<!------------------------------------------------------>
+\section sec_compilation_deformetrica Compilation of Deformetrica
+<!------------------------------------------------------>
+Finally, it remains to generate the makefile for the compilation. To do that, we need to indicate to Deformetrica where the libraries are located. The path to ITK (resp. VTK) is represented by the variable called \smallcode{ITK_DIR} (resp. \smallcode{VTK_DIR}). To set these variables, go on the \smallcode{deformetrica-[version]/codes/bin/} folder, then you can either enter the command lines :
+\includecode{
+# Replace PATH_TO_ITK and PATH_TO_VTK by the adequate values :
+cmake -D CMAKE_BUILD_TYPE=Release -D ITK_DIR=PATH_TO_ITK -D VTK_DIR=PATH_TO_VTK ../app
+make
+}
+either use the command \smallcode{ccmake ../app}, a graphical version of CMake (automatically installed with CMake), paying attention to the values of \smallcode{ITK_DIR} and \smallcode{VTK_DIR}. Furthermore, set \smallcode{CMAKE_BUILD_TYPE} to \smallcode{Release} so as to enhance the speed of the program.
+
+Now, run the command \smallcode{make} to obtain our programs namely \smallcode{ShootAndFlow2/3}, \smallcode{sparseAtlas2/3} and \smallcode{sparseMatching2/3}.
+
+
+*/
+

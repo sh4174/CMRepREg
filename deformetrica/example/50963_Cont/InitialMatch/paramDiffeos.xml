@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<sparse-diffeo-parameters>
+<use-fista>On</use-fista>
+<number-of-timepoints>20</number-of-timepoints>
+<kernel-width>4</kernel-width>
+<initial-cp-spacing>4</initial-cp-spacing>
+<freeze-cp>Off</freeze-cp>
+<kernel-type>exact</kernel-type>
+<sparsity-prior>0.0</sparsity-prior>
+<max-iterations>250</max-iterations>
+<max-line-search-iterations>25</max-line-search-iterations>
+<step-expand>2.0</step-expand>
+<step-shrink>0.10</step-shrink>
+<adaptive-tolerance>1e-4</adaptive-tolerance>
+<initial-step-multiplier>10.0</initial-step-multiplier>
+<number-of-threads>3</number-of-threads>
+</sparse-diffeo-parameters>

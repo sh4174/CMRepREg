@@ -1,0 +1,5 @@
+Grid.Type = LoopSubdivision
+Grid.Model.SolverType = PDE
+Grid.Model.Atom.SubdivisionLevel = 0
+Grid.Model.Coefficient.FileName = cmrep_med_01.vtk
+Grid.Model.Coefficient.FileType = VTK

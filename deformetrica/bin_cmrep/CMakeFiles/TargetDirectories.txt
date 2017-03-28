@@ -1,0 +1,4 @@
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin_cmrep/CMakeFiles/cmrep.dir
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin_cmrep/CMakeFiles/cmrep_fit.dir
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin_cmrep/extras/toms611/CMakeFiles/toms611.dir
+/media/shong/IntHard1/Projects/4DShapeAnalysis/Code/SPTSkeleton/CMRepReg/deformetrica/bin_cmrep/CMakeFiles/cmrep_dijkstra.dir

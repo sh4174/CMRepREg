@@ -1,0 +1,308 @@
+
+#ifndef _match_txx
+#define _match_txx
+
+#include "DeformetricaConfig.h"
+
+#include "KernelFactory.h"
+// #include "SparseDiffeoMatcher.h"
+#include "AtlasMatcher.h"
+#include "Diffeos.h"
+
+#include "KernelType.h"
+
+#include "Atlas.h"
+
+#include "DeformableMultiObject.h"
+#include "DeformableObject.h"
+
+#include "SparseDiffeoParametersXMLFile.h"
+#include "DeformableObjectParametersXMLFile.h"
+
+#include "DeformableObjectReader.h"
+
+#include "SimpleTimer.h"
+
+
+
+#if ITK_VERSION_MAJOR >= 4
+#include "itkFFTWGlobalConfiguration.h"
+#endif
+
+
+
+#include "itksys/SystemTools.hxx"
+
+#include "vnl/vnl_vector.h"
+
+#include <cstring>
+#include <iostream>
+#include <sstream>
+
+template <unsigned int Dimension>
+void match(
+		SparseDiffeoParameters* paramDiffeos,
+		int numObjects,
+		std::vector<DeformableObjectParameters::Pointer> paramObjectsList,
+		const std::vector<char*> sourcefnList,
+		const std::vector<char*> targetfnList)
+{
+    std::cout << "Deformetrica " << DEFORMETRICA_VERSION_MAJOR << "." << DEFORMETRICA_VERSION_MINOR << std::endl;
+
+	#ifdef USE_DOUBLE_PRECISION
+		typedef double TScalar;
+		std::cout << "(Computations are in double precision)" << std::endl << std::endl;
+	#else
+		typedef float TScalar;
+		std::cout << "(Computations are in simple precision)" << std::endl << std::endl;
+	#endif
+
+	std::cout << "Sparse diffeomorphic matching\n===" << std::endl;
+	std::cout << "Number of objects detected: " << numObjects << std::endl;
+	std::cout << "\n===\n" << std::endl;
+	std::cout << "Deformations Parameters:" << std::endl;
+	paramDiffeos->PrintSelf(std::cout);
+	std::cout << "\n===\n" << std::endl;
+	for (int i = 0; i < numObjects; i++)
+	{
+		std::cout << "Object " << i << ": " << std::endl;
+		std::cout << "Source file: " << sourcefnList[i] << std::endl;
+		std::cout << "Target file: " << targetfnList[i] << std::endl;
+		paramObjectsList[i]->PrintSelf(std::cout);
+		std::cout << "\n===\n" << std::endl;
+	}
+
+#if ITK_VERSION_MAJOR >= 4
+	itk::FFTWGlobalConfiguration::SetPlanRigor(FFTW_ESTIMATE);
+#endif
+
+	typedef itk::Image<TScalar, Dimension> ImageType;
+	typedef typename ImageType::Pointer ImageTypePointer;
+
+	typedef Diffeos<TScalar, Dimension> DiffeosType;
+
+	typedef DeformableObject<TScalar, Dimension> DeformableObjectType;
+	typedef std::vector<DeformableObjectType*> DeformableObjectList;
+	typedef DeformableMultiObject<TScalar, Dimension> DeformableMultiObjectType;
+	typedef DeterministicAtlas<TScalar, Dimension> DeterministicAtlasType;
+
+	//
+	// Set up the kernel factory - can't do any Update() before setting this up!
+	//
+	typedef KernelFactory<TScalar, Dimension> KernelFactoryType;
+	KernelFactoryType* kfac = KernelFactoryType::Instantiate();
+	kfac->SetWorkingSpacingRatio(paramDiffeos->GetP3MWorkingSpacingRatio());
+	kfac->SetPaddingFactor(paramDiffeos->GetP3MPaddingFactor());
+
+	//
+	// Create the deformation
+	//
+	DiffeosType* def = new DiffeosType();
+	def->SetKernelWidth(paramDiffeos->GetKernelWidth());
+	def->SetNumberOfTimePoints(paramDiffeos->GetNumberOfTimePoints());
+	def->SetPaddingFactor(paramDiffeos->GetP3MPaddingFactor()); // to define the bounding box
+	def->UseImprovedEuler();
+	paramDiffeos->ComputeTrueInverseFlow() ? def->SetComputeTrueInverseFlow() : def->UnsetComputeTrueInverseFlow();
+	if (itksys::SystemTools::Strucmp(paramDiffeos->GetKernelType().c_str(), "p3m") == 0)
+	{
+		def->SetKernelType(P3M);
+	}
+	else if (itksys::SystemTools::Strucmp(paramDiffeos->GetKernelType().c_str(), "fgt") == 0)
+	{
+		def->SetKernelType(FGT);
+	}
+#ifdef USE_CUDA
+	else if (itksys::SystemTools::Strucmp(paramDiffeos->GetKernelType().c_str(), "cudaexact") == 0)
+	{
+		def->SetKernelType(CUDAExact);
+	}
+#endif
+	else
+	{
+		if (itksys::SystemTools::Strucmp(paramDiffeos->GetKernelType().c_str(), "exact") != 0)
+			std::cerr << "Unknown kernel type for the deformation : defaulting to exact" << std::endl;
+		def->SetKernelType(Exact);
+	}
+	
+
+	//
+	// Create source and target objects
+	//
+	DeformableObjectList sourceObjectList(numObjects);
+	DeformableObjectList targetObjectList(numObjects);
+	// DeformableMultiObjectType* sourceDMO = new DeformableMultiObjectType();
+	// DeformableMultiObjectType* targetDMO = new DeformableMultiObjectType();
+	// sourceDMO->SetNumberOfObjects(numObjects);
+	// targetDMO->SetNumberOfObjects(numObjects);
+	
+	vnl_vector<TScalar> dataSigmaSquared(numObjects, 0.0);
+	for (int i = 0; i < numObjects; i++)
+	{
+		typedef DeformableObjectReader<TScalar,Dimension> ObjectReaderType;
+		ObjectReaderType* reader = new ObjectReaderType();
+		reader->SetObjectParameters(paramObjectsList[i]);
+
+		// Target :
+		reader->SetFileName(targetfnList[i]);
+		reader->Update();
+		targetObjectList[i] = reader->GetOutput();
+
+		// Source
+		reader->SetFileName(sourcefnList[i]);
+		reader->Update();
+		sourceObjectList[i] = reader->GetOutput();
+
+		TScalar DSS = paramObjectsList[i]->GetDataSigma();
+		dataSigmaSquared[i] = DSS*DSS;
+	}
+	
+	DeformableMultiObjectType* source = new DeformableMultiObjectType();
+	source->SetObjectList(sourceObjectList);
+	source->Update();
+	
+	DeformableMultiObjectType* target = new DeformableMultiObjectType();
+	target->SetObjectList(targetObjectList);
+	target->Update();
+
+	// to save memory space:
+	for (int i = 0; i < numObjects; i++)
+	{
+		delete sourceObjectList[i];
+		delete targetObjectList[i];
+	}
+
+	DeterministicAtlasType* atlas = new DeterministicAtlasType();
+	// set template	
+	atlas->SetTemplate(source);
+	// set data sigma squared
+	atlas->SetDataSigmaSquared(dataSigmaSquared);
+	// set inverse covariance matrix for momenta
+	std::string CovMomInv_fn = paramDiffeos->GetCovarianceMomentaInverse_fn();
+	if (CovMomInv_fn.empty())
+	{
+		std::cout << "No covariance matrix for momenta set: use kernel as regularizer" << std::endl;
+		atlas->SetRKHSNormForRegularization();
+	}
+	else
+	{
+		std::cout << "Use covariance matrix for momenta in file " << CovMomInv_fn << " as penalty term" << std::endl;
+		atlas->SetCovarianceMatrixInverse(CovMomInv_fn);
+		atlas->SetRKHSNormForRegularization();
+	}
+	// set initial control points positions
+	std::string CP_fn = paramDiffeos->GetInitialCPPosition_fn();
+	atlas->SetControlPoints(CP_fn);	// will set control points only if file name is not null, otherwise set a regular lattice of control points with step InitialCPSpacing
+	double InitialCPSpacing = paramDiffeos->GetInitialCPSpacing();
+	if (InitialCPSpacing < 1e-20)
+	{
+		InitialCPSpacing = paramDiffeos->GetKernelWidth();
+		std::cout << "InitialCPSpacing set to " << InitialCPSpacing << std::endl;
+	}
+	atlas->SetCPSpacing(InitialCPSpacing);
+	// set deformation
+	atlas->SetDiffeos(def);
+	// other parameters
+	atlas->SetSparsityPrior( paramDiffeos->GetSparsityPrior() );
+	// update
+	atlas->Update();
+
+	//
+	// Determine bounding box
+	//
+	vnl_matrix<TScalar> DataDomain = atlas->GetBoundingBox();
+	vnl_matrix<TScalar> BBaux = target->GetBoundingBox();
+	for (int d = 0; d < Dimension; d++)
+	{
+		DataDomain(d,0) = (DataDomain(d,0)<BBaux(d,0))?DataDomain(d,0):BBaux(d,0);
+		DataDomain(d,1) = (DataDomain(d,1)>BBaux(d,1))?DataDomain(d,1):BBaux(d,1);
+	}
+	// Set up DataDomain for kernel factory. This is the value by default, which is used everywhere but in the DeformableObjects, where a specific BoundingBox is used
+	kfac->SetDataDomain(DataDomain);
+	// DataDomain in the deformation is used to define the "out of box" exception
+	def->SetDataDomain(DataDomain);
+	
+	std::cout << "Working domain: origin =  [" << DataDomain.get_column(0) << "] length = [" << DataDomain.get_column(1) - DataDomain.get_column(0) << "]" << std::endl; 
+
+
+	// Create timer
+	SimpleTimer timer;
+
+	//
+	// Create the matcher
+	//
+	typedef AtlasMatcher<TScalar, Dimension> AMatcher;
+	AMatcher* matcher = new AMatcher();
+	matcher->SetTarget(target);
+	matcher->SetAtlas(atlas);
+	matcher->SetDiffeos(def);
+	paramDiffeos->FreezeCP()?matcher->SetFreezeCP():matcher->UnsetFreezeCP();
+	matcher->SetInitialMomentas(paramDiffeos->GetInitialMomenta_fn()); // null string means no InitialMomenta given (will be initialized with zero)
+	if (itksys::SystemTools::Strucmp(paramDiffeos->GetOptimizationMethodType().c_str(), "gradientdescent") == 0)
+	{
+		matcher->SetGradientDescent();
+	}
+	else if (itksys::SystemTools::Strucmp(paramDiffeos->GetOptimizationMethodType().c_str(), "ista") == 0)
+	{
+		matcher->SetISTA();
+	}
+	else
+	{
+		if ( (itksys::SystemTools::Strucmp(paramDiffeos->GetOptimizationMethodType().c_str(), "f_ista") != 0) &&
+				(itksys::SystemTools::Strucmp(paramDiffeos->GetOptimizationMethodType().c_str(), "fista") != 0) )
+			std::cerr << "Unknown optimization method type: defaulting to FISTA" << std::endl;
+			matcher->SetFISTA();
+	}
+	matcher->SetMaxIterations(paramDiffeos->GetMaxIterations());
+	matcher->SetMaxLineSearchIterations(paramDiffeos->GetMaxLineSearchIterations());
+	matcher->SetAdaptiveTolerance(paramDiffeos->GetAdaptiveTolerance());
+	matcher->SetInitialStepMultiplier(paramDiffeos->GetInitialStepMultiplier());
+	matcher->Update();
+
+	timer.Stop();
+
+	std::cout << "Matching took "
+			<< timer.GetElapsedHours() << " hours, "
+			<< timer.GetElapsedMinutes() << " minutes, "
+			<< timer.GetElapsedSeconds() << " seconds"
+			<< std::endl;
+
+
+	std::cout << "Write output files" << std::endl;
+
+	matcher->WriteOutput();
+	matcher->WriteAtlasToSubjectDeformations();
+	
+	std::cout << "... done" << std::endl;
+
+
+	// std::vector<std::string> outname(numObjects);
+	// std::vector<std::string> outext(numObjects);
+	// std::vector<std::string> outfn(numObjects);
+	// for (int i = 0; i < numObjects; i++)
+	// {
+	// 	std::string sourcefn;
+	// 	sourcefn.assign(sourcefnList[i]);
+	// 	int length = sourcefn.size();
+	// 	int index = length - 1;
+	// 	while( (sourcefn[index] != '.') && (index>=0) )
+	// 		index--;
+	//
+	// 	outname[i] = sourcefn.substr(0,index);
+	// 	outext[i] = sourcefn.substr(index,length-index);
+	//
+	// 	std::ostringstream oss;
+	// 	oss << outname[i] << "_final" << outext[i] << std::ends;
+	// 	outfn[i] = oss.str();
+	// }
+	//
+	// matcher->WriteFlow(outname, outext);
+
+
+	delete target;
+	delete atlas;
+	delete matcher;
+
+
+}
+
+#endif

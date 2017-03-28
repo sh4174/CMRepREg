@@ -1,0 +1,58 @@
+/**
+  \file eclipse.dox
+  \brief Eclipse.
+*/
+
+/**
+\page eclipse Eclipse
+
+\tableofcontents
+
+<!------------------------------------------------------>
+\section h1_introduction Introduction
+<!------------------------------------------------------>
+
+Eclipse is an IDE containing a base workspace and an extensible plug-in system for customizing the environment.
+
+We will see how to configure Eclipse to import Deformetrica and some tips on the personalization of Eclipse.
+
+Please download the C/C++ Developers version of Eclipse (the default version is for Java). You can download Eclipse here: https://www.eclipse.org/downloads/packages/eclipse-ide-cc-developers/lunasr1
+
+
+<!------------------------------------------------------>
+\section h1_importing_deformetrica Importing Deformetrica
+<!------------------------------------------------------>
+Prior to using Eclipse, we need to generate two hidden files (\smallcode{.cproject} and \smallcode{.project}) so as to import correctly Deformetrica into Eclipse. To do that, go on the bin folder of Deformetrica and launch the following commands :
+\includecode{
+cmake  -G "Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_VERSION=4.2 -DCMAKE_ECLIPSE_MAKE_ARGUMENTS=-j4 -D CMAKE_BUILD_TYPE=Debug -D ITK_DIR=${PATH_TO_ITK_DIR} -D VTK_DIR=${PATH_TO_VTK_DIR} ../app
+
+mv .cproject ../.cproject
+mv .project  ../.project
+}
+(http://sgpsproject.sourceforge.net/JavierVGomez/index.php/How_to_configure_a_C/C%2B%2B_project_with_Eclipse_and_CMake)
+
+Now, launch Eclipse et choose the location of the workspace if needed. Afterwards, go to the workbench icon. On the menu bar, go on File > Import... then choose General > Existing Projects into Workspace. Choose the root folder of Deformetrica and pay attention that "Copy projects into workspace" is unchecked.
+
+
+<!------------------------------------------------------>
+\section h1_tips Tips
+<!------------------------------------------------------>
+
+\subsection h2_syntax_highlighting Syntax highlighting
+
+Go on, Window > Preferences, C/C++ > File Types, then choose \smallcode{*.txx} as pattern change the type to C++ Source File.
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
